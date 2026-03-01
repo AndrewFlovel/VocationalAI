@@ -2,7 +2,7 @@
 
 Plataforma de orientación vocacional para bachilleres de Santa Cruz, Montero y Warnes. Ayuda a reducir la crisis vocacional y la deserción universitaria con pruebas gamificadas e información del mercado laboral (datos INE, SIE, cámaras empresariales).
 
-**Stack:** React · Vite · TypeScript · Supabase · (próximamente Gemini API) · Vercel
+**Stack:** React · Vite · TypeScript · Supabase · Gemini API · Vercel
 
 ## Requisitos
 
@@ -32,7 +32,9 @@ Edita `.env` y reemplaza con los datos de tu proyecto en [Supabase](https://app.
 - `VITE_SUPABASE_URL`: URL del proyecto (ej. `https://xxxx.supabase.co`)
 - `VITE_SUPABASE_ANON_KEY`: clave anónima pública (Project Settings → API)
 
-La app arranca igual sin estas variables; solo necesitarás configurarlas cuando uses autenticación o base de datos.
+- `GEMINI_API_KEY`: para la API de recomendaciones (obtener en [Google AI Studio](https://aistudio.google.com/app/apikey)). Añádela en **Vercel** → Settings → Environment Variables (no en el frontend).
+
+La app arranca sin Supabase; para la prueba vocacional con IA necesitas desplegar y configurar `GEMINI_API_KEY` en Vercel.
 
 ### 3. Desarrollo
 
@@ -60,7 +62,8 @@ npm run preview
 2. En el proyecto, ve a **Settings → Environment Variables** y añade:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-3. Deploy: Vercel usará `npm run build` por defecto para proyectos Vite.
+   - `GEMINI_API_KEY` (clave de [Google AI Studio](https://aistudio.google.com/app/apikey) para las recomendaciones de la prueba vocacional)
+3. Deploy: Vercel usará `npm run build` y servirá la API en `/api/recomendaciones`.
 
 ## Estructura del proyecto
 

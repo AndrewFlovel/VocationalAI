@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function Empezar() {
   const pasos = [
     {
@@ -25,6 +27,11 @@ export default function Empezar() {
           </li>
         ))}
       </ol>
+      <p className="auth-subtitle" style={{ marginTop: '1.5rem' }}>
+        <Link to="/prueba" className="btn">
+          Hacer la prueba de orientación
+        </Link>
+      </p>
     </main>
   )
 }

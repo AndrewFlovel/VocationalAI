@@ -73,30 +73,33 @@ Por favor:
 
 ---
 
-## Sprint 2 — Autenticación y perfiles de usuario (pendiente de tu confirmación)
+## Sprint 2 — Autenticación y perfiles de usuario ✅
 
 ### Objetivo del sprint
 Que el estudiante pueda registrarse e iniciar sesión (email o anónimo si aplica), y que tengamos en Supabase una tabla de perfiles (ej. tipo_usuario, municipio, tipo_unidad_educativa) vinculada al usuario.
 
-### Tareas resumidas
-- Supabase Auth (registro/login).
-- Tabla `profiles` y políticas RLS.
-- Páginas de registro e inicio de sesión en español.
-- Guardar municipio y tipo de colegio (fiscal/privado) en el perfil.
+### Tareas realizadas
+- Supabase Auth (registro con email/contraseña e inicio de sesión).
+- Tabla `profiles` y políticas RLS (script en `supabase/migrations/001_profiles.sql` — ejecutar en Supabase SQL Editor).
+- Páginas en español: Iniciar sesión (`/iniciar-sesion`), Registrarse (`/registrarse`), Mi perfil (`/perfil`).
+- Perfil con municipio (Santa Cruz de la Sierra, Montero, Warnes) y tipo de unidad educativa (fiscal/privado).
+- Header con enlaces según sesión (Iniciar sesión / Registrarse o Mi perfil / Cerrar sesión).
 - Criterio de completitud: usuario nuevo puede registrarse, iniciar sesión y ver/editar su perfil básico.
 
 ---
 
-## Sprint 3 — Módulo de orientación vocacional con IA (pendiente)
+## Sprint 3 — Módulo de orientación vocacional con IA ✅
 
 ### Objetivo del sprint
 Implementar un flujo de “prueba gamificada” (preguntas de intereses/aptitudes) y usar Gemini para analizar respuestas y devolver un primer borrador de recomendaciones en lenguaje sencillo.
 
-### Tareas resumidas
-- Diseño de preguntas (basado en referencias ITC si se usan).
-- Pantalla de prueba gamificada (una pregunta por pantalla o por bloque).
-- Envío de respuestas a un backend/edge function que llame a Gemini API.
-- Respuesta mostrada al usuario (carreras sugeridas, texto breve).
+### Tareas realizadas
+- **Preguntas:** 6 preguntas de intereses/aptitudes en `src/data/preguntas.ts` (actividad preferida, entorno ideal, fortaleza, problema a resolver, estilo de estudio, sector en Bolivia).
+- **Pantalla gamificada:** ruta `/prueba`, una pregunta por pantalla, barra de progreso, opciones seleccionables y botón “Siguiente” / “Ver mis recomendaciones”.
+- **API:** `api/recomendaciones.ts` (Vercel serverless) llama a Gemini con las respuestas y devuelve texto de recomendaciones en español para contexto boliviano.
+- **Resultados:** pantalla “Tus recomendaciones” con el texto generado y aviso de que son orientativas (complementan orientación con familia/colegio).
+- **Enlace:** en la página “¿Qué haremos?” (/empezar) botón “Hacer la prueba de orientación” que lleva a `/prueba`.
+- **Config:** `GEMINI_API_KEY` en Vercel (y en `.env` si se usa `vercel dev`). Opcional `VITE_API_BASE_URL` para desarrollo.
 - Criterio: el estudiante completa la prueba y ve recomendaciones generadas por IA.
 
 ---
