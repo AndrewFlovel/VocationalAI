@@ -7,6 +7,7 @@ import IniciarSesion from './pages/IniciarSesion'
 import Registrarse from './pages/Registrarse'
 import Perfil from './pages/Perfil'
 import PruebaVocacional from './pages/PruebaVocacional'
+import MercadoLaboral from './pages/MercadoLaboral'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Bienvenida />} />
           <Route path="/empezar" element={<Empezar />} />
           <Route path="/prueba" element={<PruebaVocacional />} />
+          <Route path="/mercado" element={<MercadoLaboral />} />
           <Route path="/iniciar-sesion" element={<IniciarSesion />} />
           <Route path="/registrarse" element={<Registrarse />} />
           <Route path="/perfil" element={<Perfil />} />

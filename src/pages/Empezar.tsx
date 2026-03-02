@@ -27,9 +27,12 @@ export default function Empezar() {
           </li>
         ))}
       </ol>
-      <p className="auth-subtitle" style={{ marginTop: '1.5rem' }}>
+      <p className="auth-subtitle" style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <Link to="/prueba" className="btn">
           Hacer la prueba de orientación
+        </Link>
+        <Link to="/mercado" className="btn" style={{ background: 'var(--color-surface)', color: 'var(--color-primary)', border: '2px solid var(--color-primary)' }}>
+          Ver datos del mercado
         </Link>
       </p>
     </main>
