@@ -133,6 +133,36 @@ Dejar la app lista para uso real: manejo de conectividad limitada (cache, mensaj
 
 ---
 
+## Sprint 6 — Conexión y Matchmaking Educativo
+
+#### Objetivo del sprint
+
+Desarrollar una interfaz que cruce los resultados del test de orientación vocacional (Sprint 3) y las preferencias logísticas del estudiante (presupuesto, ubicación, disponibilidad) con una base de datos de instituciones de educación superior, facilitando el contacto directo y accionable.
+
+### Lista de tareas específicas
+
+1. Modelo de datos de instituciones:
+   - Crear tablas en Supabase (instituciones y oferta_academica) para almacenar universidades e institutos técnicos locales (ej. UAGRM, UPSA, institutos tecnológicos de Santa Cruz, Montero y Warnes).
+   - Incluir campos clave: nombre, ubicación, rango de costos (mensualidad/matrícula), tipo de gestión (pública/privada) y enlace de contacto directo (WhatsApp o web).
+
+2. Formulario de preferencias logísticas:
+   - Construir una interfaz que se despliegue justo después de mostrar los resultados del test con Gemini.
+   - Capturar datos clave del estudiante: municipio de preferencia para estudiar, rango de presupuesto mensual deseado y turno (mañana, tarde, noche).
+
+3. Lógica de emparejamiento (Matchmaking)
+
+   - Implementar una función que tome las carreras sugeridas por la IA y busque coincidencias exactas o afines en la tabla oferta_academica de Supabase.
+   - Aplicar filtros basados en el formulario de preferencias (descartar opciones fuera de presupuesto o en municipios no deseados).
+
+4. Interfaz de resultados y conexión
+   - Diseñar una vista con tarjetas (cards) para cada institución recomendada.
+   - Mostrar de forma clara: nombre de la institución, carrera coincidente, costo estimado y porcentaje de afinidad.
+   - Incluir un Call to Action (CTA) claro, como un botón "Solicitar información por WhatsApp" que genere un enlace con un mensaje pre-rellenado.
+
+5. Registro de interacciones (Métricas de conversión)
+   - Crear una tabla interacciones_contacto en Supabase para registrar cuándo un estudiante hace clic en el botón de contacto de una universidad. Esto servirá como métrica analítica clave para medir la efectividad de la plataforma frente a la deserción y la indecisión.
+
+---
 ## Próximo paso
 
 **Empieza con el Sprint 1:** usa el “Primer prompt exacto” de la sección Sprint 1 en tu asistente de IA o en Cursor para generar el código inicial. Cuando tengas el proyecto corriendo localmente, la bienvenida en español, la navegación y el despliegue en Vercel funcionando, considera el Sprint 1 completo.
