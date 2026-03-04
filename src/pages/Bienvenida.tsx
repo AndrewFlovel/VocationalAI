@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export default function Bienvenida() {
   return (
-    <main className="app-main">
+    <main className="app-main animate-fade-in-up">
       <section className="welcome">
         <h1>Orientación vocacional para tu futuro</h1>
         <p>

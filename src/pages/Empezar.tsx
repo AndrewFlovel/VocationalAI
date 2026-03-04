@@ -17,7 +17,7 @@ export default function Empezar() {
   ]
 
   return (
-    <main className="app-main">
+    <main className="app-main animate-fade-in-up">
       <h1 className="page-heading">¿Qué haremos?</h1>
       <ol className="steps" aria-label="Pasos de la orientación">
         {pasos.map((paso, i) => (

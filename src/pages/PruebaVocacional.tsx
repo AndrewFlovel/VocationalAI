@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PREGUNTAS } from '../data/preguntas'
 import type { Pregunta } from '../data/preguntas'
+import EthicalDisclaimer from '../components/EthicalDisclaimer'
+import FeedbackForm from '../components/FeedbackForm'
+import MatchmakingEducativo from '../components/MatchmakingEducativo'
 
 const TOTAL_STEPS = PREGUNTAS.length + 1 // intro + preguntas
 // Siempre usamos ruta relativa: en local el proxy de Vite reenvía a Vercel; en producción es mismo origen
@@ -100,7 +103,7 @@ export default function PruebaVocacional() {
       )}
 
       {isIntro && (
-        <div className="prueba-step">
+        <div className="prueba-step animate-fade-in-up">
           <h1 className="page-heading">Prueba de orientación</h1>
           <p className="prueba-intro">
             Responde con calma. No hay respuestas correctas o incorrectas; sirve para conocerte mejor y sugerirte carreras alineadas a tus intereses y al contexto de Bolivia (Santa Cruz, Montero, Warnes).
@@ -113,7 +116,7 @@ export default function PruebaVocacional() {
       )}
 
       {isQuestion && preguntaActual && (
-        <div className="prueba-step">
+        <div className="prueba-step animate-fade-in-up" key={step}>
           <p className="prueba-step-num">Pregunta {step} de {PREGUNTAS.length}</p>
           <h2 className="prueba-pregunta">{preguntaActual.texto}</h2>
           <ul className="prueba-opciones" role="listbox" aria-label={preguntaActual.texto}>
@@ -150,7 +153,7 @@ export default function PruebaVocacional() {
       )}
 
       {isResult && (
-        <div className="prueba-step prueba-resultado">
+        <div className="prueba-step prueba-resultado animate-fade-in-up">
           <h1 className="page-heading">Tus recomendaciones</h1>
           {error ? (
             <div className="form-error" role="alert">
@@ -162,10 +165,16 @@ export default function PruebaVocacional() {
           ) : (
             <>
               <div className="prueba-texto-resultado">{resultado}</div>
-              <p className="auth-subtitle" style={{ marginTop: '1rem' }}>
-                Estas sugerencias son un punto de partida. Te recomendamos comentarlas con tu familia, orientación del colegio o un profesional.
-              </p>
-              <Link to="/empezar" className="btn">Volver al inicio</Link>
+              
+              <MatchmakingEducativo recomendacionesIA={resultado} />
+
+              <EthicalDisclaimer />
+              
+              <FeedbackForm />
+
+              <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                <Link to="/empezar" className="btn">Volver al inicio</Link>
+              </div>
             </>
           )}
         </div>

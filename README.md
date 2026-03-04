@@ -65,6 +65,13 @@ npm run preview
    - `GEMINI_API_KEY` (clave de [Google AI Studio](https://aistudio.google.com/app/apikey) para las recomendaciones de la prueba vocacional)
 3. Deploy: Vercel usará `npm run build` y servirá la API en `/api/recomendaciones`.
 
+## Configuración de Supabase (Base de Datos)
+
+Ejecuta los archivos SQL en el **SQL Editor** de tu proyecto en [Supabase](https://app.supabase.com):
+
+1. `supabase/migrations/001_profiles.sql`: Tablas de perfiles de usuario y políticas RLS.
+2. `supabase/migrations/002_feedback.sql`: Tabla para el sistema de retroalimentación.
+
 ## Estructura del proyecto
 
 ```
