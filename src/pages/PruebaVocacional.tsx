@@ -1,179 +1,213 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { PREGUNTAS } from '../data/preguntas'
-import type { Pregunta } from '../data/preguntas'
 import EthicalDisclaimer from '../components/EthicalDisclaimer'
 import FeedbackForm from '../components/FeedbackForm'
 import MatchmakingEducativo from '../components/MatchmakingEducativo'
 
-const TOTAL_STEPS = PREGUNTAS.length + 1 // intro + preguntas
-// Siempre usamos ruta relativa: en local el proxy de Vite reenvía a Vercel; en producción es mismo origen
+const TOTAL_STEPS = 6
+const API_PROXIMO = '/api/proximo-paso'
 const API_RECOMENDACIONES = '/api/recomendaciones'
 
-export interface Respuesta {
-  preguntaId: string
-  preguntaTexto: string
-  valor: string
-  opcionTexto: string
+interface DynamicQuestion {
+  pregunta: string
+  opciones: { id: string, texto: string, valor: string }[]
+  insight?: string
 }
 
 export default function PruebaVocacional() {
   const [step, setStep] = useState(0)
-  const [respuestas, setRespuestas] = useState<Respuesta[]>([])
+  const [respuestas, setRespuestas] = useState<any[]>([])
+  const [currentQuestion, setCurrentQuestion] = useState<DynamicQuestion | null>(null)
   const [respuestaActual, setRespuestaActual] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [resultado, setResultado] = useState('')
+  const [insight, setInsight] = useState('')
   const [error, setError] = useState('')
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
 
-  const isIntro = step === 0
-  const isQuestion = step >= 1 && step <= PREGUNTAS.length
-  const isSending = step === TOTAL_STEPS && loading
-  const isResult = step === TOTAL_STEPS && !loading && (resultado || error)
+  const progress = (step / TOTAL_STEPS) * 100
 
-  const preguntaActual: Pregunta | undefined = PREGUNTAS[step - 1]
-  const progress = step === 0 ? 0 : (step / TOTAL_STEPS) * 100
+  useEffect(() => {
+    const handleStatus = () => setIsOnline(navigator.onLine)
+    window.addEventListener('online', handleStatus)
+    window.addEventListener('offline', handleStatus)
+    return () => {
+      window.removeEventListener('online', handleStatus)
+      window.removeEventListener('offline', handleStatus)
+    }
+  }, [])
 
-  function handleElegir(valor: string) {
-    setRespuestaActual(valor)
-  }
+  // Inicializar primera pregunta (siempre estática para rapidez o dinámica si se prefiere)
+  useEffect(() => {
+    if (step === 1 && !currentQuestion) {
+      setCurrentQuestion({
+        pregunta: PREGUNTAS[0].texto,
+        opciones: PREGUNTAS[0].opciones.map(o => ({ id: o.id, texto: o.texto, valor: o.valor }))
+      })
+    }
+  }, [step])
 
-  function handleSiguiente() {
-    if (isIntro) {
+  const handleSiguiente = async () => {
+    if (step === 0) {
       setStep(1)
       return
     }
-    if (isQuestion && preguntaActual && respuestaActual) {
-      const nueva: Respuesta = {
-        preguntaId: preguntaActual.id,
-        preguntaTexto: preguntaActual.texto,
-        valor: respuestaActual,
-        opcionTexto: opcionTextoActual,
-      }
-      setRespuestas((prev) => [...prev, nueva])
-      setRespuestaActual(null)
-      if (step < PREGUNTAS.length) {
-        setStep(step + 1)
+
+    const textoRespuesta = currentQuestion?.opciones.find(o => o.valor === respuestaActual)?.texto || ''
+    const nuevasRespuestas = [...respuestas, { 
+      pregunta: currentQuestion?.pregunta, 
+      respuesta: textoRespuesta, 
+      valor: respuestaActual 
+    }]
+    setRespuestas(nuevasRespuestas)
+    setRespuestaActual(null)
+
+    if (step < TOTAL_STEPS) {
+      setLoading(true)
+      const siguientePaso = step + 1
+
+      if (isOnline) {
+        try {
+          const res = await fetch(API_PROXIMO, {
+            method: 'POST',
+            body: JSON.stringify({ 
+              historial: nuevasRespuestas, 
+              pasoActual: siguientePaso, 
+              totalPasos: TOTAL_STEPS 
+            })
+          })
+          const data = await res.json()
+          setCurrentQuestion(data)
+          setInsight(data.insight || '')
+          setStep(siguientePaso)
+        } catch (err) {
+          console.error('Error IA Adaptativa:', err)
+          // Fallback a preguntas estáticas si falla la IA
+          usarPreguntaEstatica(siguientePaso)
+        } finally {
+          setLoading(false)
+        }
       } else {
-        setStep(TOTAL_STEPS)
-        enviarRecomendaciones([...respuestas, nueva])
+        usarPreguntaEstatica(siguientePaso)
+        setLoading(false)
       }
+    } else {
+      enviarResultadosFinales(nuevasRespuestas)
     }
   }
 
-  function enviarRecomendaciones(answers: Respuesta[]) {
-    setLoading(true)
-    setError('')
-    setResultado('')
-    fetch(API_RECOMENDACIONES, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ respuestas: answers }),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error(
-              'La API no respondió (404). En local: pon en .env VITE_API_BASE_URL=https://tu-app.vercel.app (tu URL de Vercel) y reinicia con "npm run dev". En Vercel: revisa GEMINI_API_KEY en Variables de entorno.'
-            )
-          }
-          if (res.status === 502) {
-            throw new Error('Servicio no disponible. Revisa que GEMINI_API_KEY esté configurada en Vercel (Settings → Environment Variables).')
-          }
-          throw new Error(`Error ${res.status}`)
-        }
-        return res.json()
+  const usarPreguntaEstatica = (paso: number) => {
+    const q = PREGUNTAS[paso - 1]
+    if (q) {
+      setCurrentQuestion({
+        pregunta: q.texto,
+        opciones: q.opciones.map(o => ({ id: o.id, texto: o.texto, valor: o.valor }))
       })
-      .then((data) => {
-        setResultado(data.texto ?? data.recomendacion ?? JSON.stringify(data))
-      })
-      .catch((err) => {
-        setError(err.message || 'No se pudieron generar recomendaciones. Intenta de nuevo.')
-      })
-      .finally(() => setLoading(false))
+      setInsight('')
+      setStep(paso)
+    }
   }
 
-  const opcionTextoActual = preguntaActual?.opciones.find((o) => o.valor === respuestaActual)?.texto ?? ''
+  const enviarResultadosFinales = async (historial: any[]) => {
+    setLoading(true)
+    setStep(TOTAL_STEPS + 1)
+    try {
+      const res = await fetch(API_RECOMENDACIONES, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ respuestas: historial.map(r => ({ preguntaTexto: r.pregunta, opcionTexto: r.respuesta, valor: r.valor })) }),
+      })
+      const data = await res.json()
+      setResultado(data.texto || data.recomendacion)
+    } catch (err) {
+      setError('Error al generar recomendaciones finales.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <main className="app-main prueba-main">
-      {!isResult && (
-        <div className="prueba-progress" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
+    <main className="app-main prueba-main animate-fade-in-up">
+      {step > 0 && step <= TOTAL_STEPS && (
+        <div className="prueba-progress">
           <div className="prueba-progress-bar" style={{ width: `${progress}%` }} />
         </div>
       )}
 
-      {isIntro && (
-        <div className="prueba-step animate-fade-in-up">
-          <h1 className="page-heading">Prueba de orientación</h1>
+      {step === 0 && (
+        <div className="prueba-step">
+          <span className="prueba-step-num">Test IA Adaptativo</span>
+          <h1 className="prueba-pregunta">Tu camino personalizado</h1>
           <p className="prueba-intro">
-            Responde con calma. No hay respuestas correctas o incorrectas; sirve para conocerte mejor y sugerirte carreras alineadas a tus intereses y al contexto de Bolivia (Santa Cruz, Montero, Warnes).
+            A diferencia de un test normal, nuestra IA analizará tus respuestas para elegir la siguiente pregunta.
           </p>
-          <p className="prueba-intro">Son {PREGUNTAS.length} preguntas. Puedes cambiar tus respuestas antes de enviar.</p>
-          <button type="button" className="btn" onClick={() => setStep(1)}>
-            Empezar preguntas
-          </button>
+          {isOnline ? (
+            <p style={{ color: 'var(--color-primary)', fontSize: '0.9rem', fontWeight: 700 }}>✨ Conexión con Gemini activa: Test Personalizado habilitado.</p>
+          ) : (
+            <p style={{ color: 'var(--color-orange)', fontSize: '0.9rem' }}>⚠️ Modo Offline: Se usará el test estándar pre-cargado.</p>
+          )}
+          <button type="button" className="btn btn-block" style={{ marginTop: '2rem' }} onClick={handleSiguiente}>¡Empezar ahora!</button>
         </div>
       )}
 
-      {isQuestion && preguntaActual && (
-        <div className="prueba-step animate-fade-in-up" key={step}>
-          <p className="prueba-step-num">Pregunta {step} de {PREGUNTAS.length}</p>
-          <h2 className="prueba-pregunta">{preguntaActual.texto}</h2>
-          <ul className="prueba-opciones" role="listbox" aria-label={preguntaActual.texto}>
-            {preguntaActual.opciones.map((opcion) => (
-              <li key={opcion.id}>
-                <button
-                  type="button"
-                  className={`prueba-opcion ${respuestaActual === opcion.valor ? 'prueba-opcion--active' : ''}`}
-                  onClick={() => handleElegir(opcion.valor)}
-                  role="option"
-                  aria-selected={respuestaActual === opcion.valor}
-                >
-                  {opcion.texto}
-                </button>
-              </li>
+      {step > 0 && step <= TOTAL_STEPS && currentQuestion && (
+        <div className="prueba-step" key={step}>
+          <p className="prueba-step-num">Paso {step} de {TOTAL_STEPS}</p>
+          
+          {insight && isOnline && (
+            <div className="step" style={{ background: 'rgba(19, 236, 109, 0.05)', borderColor: 'var(--color-primary)', borderBottomWidth: '1px', padding: '1rem', marginBottom: '1.5rem' }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-primary-text)' }}>💡 {insight}</p>
+            </div>
+          )}
+
+          <h2 className="prueba-pregunta">{currentQuestion.pregunta}</h2>
+          
+          <div className="prueba-opciones" style={{ pointerEvents: loading ? 'none' : 'auto' }}>
+            {currentQuestion.opciones.map((opcion, idx) => (
+              <button
+                key={opcion.id}
+                type="button"
+                className={`prueba-opcion ${respuestaActual === opcion.valor ? 'prueba-opcion--active' : ''}`}
+                onClick={() => setRespuestaActual(opcion.valor)}
+              >
+                <span className="material-symbols-outlined opcion-icon" style={{ fontSize: '2.5rem' }}>
+                  {['psychology', 'rocket_launch', 'palette', 'school'][idx % 4]}
+                </span>
+                {opcion.texto}
+              </button>
             ))}
-          </ul>
+          </div>
+
           <button
             type="button"
-            className="btn"
-            onClick={() => handleSiguiente()}
-            disabled={!respuestaActual}
+            className="btn btn-block"
+            onClick={handleSiguiente}
+            disabled={!respuestaActual || loading}
           >
-            {step < PREGUNTAS.length ? 'Siguiente' : 'Ver mis recomendaciones'}
+            {loading ? 'Pensando...' : step < TOTAL_STEPS ? 'Siguiente' : 'Ver Perfil Final'}
           </button>
         </div>
       )}
 
-      {isSending && (
-        <div className="prueba-step prueba-step--center">
-          <p className="prueba-loading">Generando recomendaciones con IA…</p>
-          <p className="auth-subtitle">Un momento, por favor.</p>
-        </div>
-      )}
-
-      {isResult && (
-        <div className="prueba-step prueba-resultado animate-fade-in-up">
-          <h1 className="page-heading">Tus recomendaciones</h1>
-          {error ? (
-            <div className="form-error" role="alert">
-              {error}
-              <p className="auth-subtitle" style={{ marginTop: '0.5rem' }}>
-                Puedes <button type="button" className="header-btn" style={{ marginLeft: 0 }} onClick={() => { setStep(0); setRespuestas([]); setResultado(''); setError(''); }}>volver a intentar</button> o <Link to="/empezar">regresar al inicio</Link>.
-              </p>
-            </div>
+      {step > TOTAL_STEPS && (
+        <div className="prueba-step prueba-resultado">
+          <h1 className="page-heading">Tu Perfil Vocacional</h1>
+          {loading ? (
+             <div style={{ textAlign: 'center', padding: '3rem' }}>
+               <span className="material-symbols-outlined opcion-icon animate-spin">history_edu</span>
+               <p className="prueba-loading" style={{ marginTop: '1rem' }}>Generando tu mapa de vida...</p>
+             </div>
+          ) : error ? (
+            <div className="form-error">{error}</div>
           ) : (
             <>
               <div className="prueba-texto-resultado">{resultado}</div>
-              
               <MatchmakingEducativo recomendacionesIA={resultado} />
-
               <EthicalDisclaimer />
-              
               <FeedbackForm />
-
-              <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-                <Link to="/empezar" className="btn">Volver al inicio</Link>
+              <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+                <Link to="/empezar" className="btn btn-secondary">Ir al Inicio</Link>
               </div>
             </>
           )}
