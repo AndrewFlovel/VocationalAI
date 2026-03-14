@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { INSTITUCIONES, Institucion, Carrera } from '../data/instituciones'
+import { INSTITUCIONES } from '../data/instituciones'
 
 interface OfertaMatch {
   id: string
